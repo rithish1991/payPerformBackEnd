@@ -1,5 +1,7 @@
 package com.bank.controller;
 
+import java.util.Date;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bank.documents.Accounts;
 import com.bank.documents.BankAccounts;
+import com.bank.documents.Transaction;
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -27,7 +30,7 @@ public class TransferController {
 	public String transferAccounts(@RequestParam("fromBid") String fromBid,@RequestParam("fromphone") String sourcePhoneNo,@RequestParam("toBid") String toBid,@RequestParam("toPhone") String toPhone,@RequestParam("amount") String amount) {
 		
 		
-		
+		 String srceBankName = "" ,destBankName = "";
 		Query query = new Query();
 		query.addCriteria(Criteria.where("phone_id").is(sourcePhoneNo));
 		
@@ -64,7 +67,7 @@ public class TransferController {
 		 {
 			 if(accts.getBankId().equalsIgnoreCase(fromBid))
 			 {
-				 
+				 srceBankName = accts.getBankName();
 				 accts.setAccount_balance(accts.getAccount_balance() - amountSize);
 				 break;
 			 }
@@ -75,14 +78,27 @@ public class TransferController {
 		 {
 			 if(accts.getBankId().equalsIgnoreCase(toBid))
 			 {
-				 
+				 destBankName  = accts.getBankName();
 				 accts.setAccount_balance(accts.getAccount_balance() + amountSize);
 				 break;
 			 }
 			 
 		 }
 		 mongoTemplate.save(destDocument);
-		return null;
+		 UUID idOne = UUID.randomUUID();
+		 
+		 String transId = idOne.toString();
+		 Transaction tx = new Transaction();
+		 tx.setTid(transId);		 
+		 tx.setDebitedFrom(srceBankName);
+		 tx.setSourcePhoneNumber(sourcePhoneNo);
+		 tx.setDestPhoneNumber(toPhone);
+		 tx.setCreditedTo(destBankName);
+		 tx.setAmount(amountSize);
+		 tx.setDate(new Date());
+		 tx.setFlag("Sucess");
+		 mongoTemplate.insert(tx);
+		return "Transaction Success";
 	}
 
 }
